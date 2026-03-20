@@ -1,65 +1,113 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useMemo } from "react";
+import { InputSection } from "@/components/InputSection";
+import { ResultsChart } from "@/components/ResultsChart";
+import { SummaryCards } from "@/components/SummaryCards";
+import { AhaMoment } from "@/components/AhaMoment";
+import { calculateScenarios, CalculatorInputs } from "@/lib/calculator";
+import { Card } from "@/components/ui/Card";
 
 export default function Home() {
+  const [inputs, setInputs] = useState<CalculatorInputs>({
+    initialCapital: 10000,
+    expectedInflation: 5.0,
+    depositRate: 4.0,
+    bondFirstYearRate: 6.5,
+    bondMargin: 1.25,
+    taxRate: 19.0,
+  });
+
+  const handleChange = (field: keyof CalculatorInputs, value: number) => {
+    setInputs((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const results = useMemo(() => calculateScenarios(inputs), [inputs]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <header className="bg-white border-b py-4 px-6 shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <span className="text-blue-600">FBO</span> Kalkulator Obligacji
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <div className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 pb-32 lg:pb-8">
+        {/* Left Column: Inputs (Desktop) */}
+        <div className="lg:col-span-5 space-y-6">
+          <InputSection inputs={inputs} onChange={handleChange} />
+          <div className="hidden lg:block">
+             <AhaMoment summary={results.summary} />
+          </div>
         </div>
-      </main>
-    </div>
+
+        {/* Right Column: Chart & Summary (Desktop) */}
+        <div className="lg:col-span-7 space-y-6 flex flex-col">
+          <ResultsChart data={results.chartData} />
+          
+          <div className="hidden lg:block">
+            <SummaryCards initialCapital={inputs.initialCapital} summary={results.summary} />
+          </div>
+        </div>
+        
+        {/* Mobile Only: Aha Moment (Between Inputs and Sticky Footer if needed, or just below inputs) */}
+        <div className="lg:hidden col-span-1">
+           <AhaMoment summary={results.summary} />
+        </div>
+      </div>
+
+      {/* Mobile Sticky Footer for Summary Cards */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+        {/* On mobile, we might want a compact version or carousel? 
+            The spec says "sticky-cards z wynikami na dole ekranu".
+            3 cards might be too wide for one row on mobile. 
+            Let's make them scrollable horizontally or stacked compactly.
+            The `SummaryCards` component uses grid-cols-1 md:grid-cols-3.
+            Let's modify SummaryCards to be flexible or wrap it here.
+        */}
+        <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+           <div className="flex gap-4 min-w-[max-content] md:min-w-0 md:grid md:grid-cols-3">
+             {/* We can reuse the component but the styling in it is grid-cols-1. 
+                 We need to override or pass className.
+                 The component has specific classes. Let's adjust the component to be responsive.
+                 Wait, I can't easily change the component's internal grid behavior from outside without props.
+                 But I can make the container here scrollable.
+             */}
+              <Card className="min-w-[140px] p-3 flex flex-col items-center justify-center text-center bg-gray-50 border-gray-200 shrink-0">
+                <h3 className="text-xs font-medium text-gray-500 uppercase">Gotówka</h3>
+                <p className="text-lg font-bold text-gray-700">
+                  {new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(results.summary.cash)}
+                </p>
+                <p className="text-xs text-gray-400">0 zł zysku</p>
+              </Card>
+
+              <Card className="min-w-[140px] p-3 flex flex-col items-center justify-center text-center bg-blue-50 border-blue-200 shrink-0">
+                <h3 className="text-xs font-medium text-blue-600 uppercase">Lokata</h3>
+                <p className="text-lg font-bold text-blue-800">
+                   {new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(results.summary.deposit)}
+                </p>
+                <p className="text-xs text-blue-600">
+                  +{new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(results.summary.deposit - inputs.initialCapital)} zysku
+                </p>
+              </Card>
+
+              <Card className="min-w-[160px] p-3 flex flex-col items-center justify-center text-center bg-green-50 border-green-300 ring-2 ring-green-500 shadow-lg shrink-0 relative overflow-visible">
+                <div className="absolute top-0 right-0 -mt-3 -mr-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                  POLECANE
+                </div>
+                <h3 className="text-xs font-bold text-green-700 uppercase">Obligacje</h3>
+                <p className="text-xl font-extrabold text-green-800">
+                   {new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(results.summary.bond)}
+                </p>
+                <p className="text-xs font-medium text-green-600">
+                  +{new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(results.summary.bond - inputs.initialCapital)} zysku
+                </p>
+              </Card>
+           </div>
+        </div>
+      </div>
+    </main>
   );
 }
